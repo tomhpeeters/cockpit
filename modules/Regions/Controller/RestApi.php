@@ -27,7 +27,7 @@ class RestApi extends \LimeExtra\Controller {
             return false;
         }
 
-        $region = $this->region($name);
+        $region = $this->module("regions")->region($name);
 
         if (!$region) {
             return false;
