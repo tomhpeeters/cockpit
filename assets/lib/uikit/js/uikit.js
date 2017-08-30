@@ -2658,8 +2658,12 @@
             this.element.attr('aria-hidden', this.element.hasClass('uk-open'));
 
             this.on('click', '.uk-modal-close', function(e) {
+
                 e.preventDefault();
-                $this.hide();
+
+                var modal = UI.$(e.target).closest('.uk-modal');
+                if (modal[0] === $this.element[0]) $this.hide();
+
             }).on('click', function(e) {
 
                 var target = UI.$(e.target);
@@ -3258,7 +3262,9 @@
 
                 var target = UI.$(e.target);
 
-                if (!e.type.match(/swipe/)) {
+                if (e.type.match(/swipe/)) {
+                    if (target.parents('.uk-offcanvas-bar:first').length) return;
+                } else {
 
                     if (!target.hasClass('uk-offcanvas-close')) {
                         if (target.hasClass('uk-offcanvas-bar')) return;

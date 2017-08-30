@@ -103,12 +103,8 @@ $this->module("cockpit")->extend([
 
         extract($options);
 
-        if (!$width) {
-            return ['error' => 'Target width parameter is missing'];
-        }
-
-        if (!$height) {
-            return ['error' => 'Target height parameter is missing'];
+        if (!$width && !$height) {
+            return ['error' => 'Target width or height parameter is missing'];
         }
 
         if (!$src) {
@@ -142,11 +138,19 @@ $this->module("cockpit")->extend([
             return $url;
         }
 
+        if (!$width || !$height) {
+            
+            list($w, $h, $type, $attr)  = getimagesize($path);
+
+            if (!$width) $width = ceil($w * ($height/$h));
+            if (!$height) $height = ceil($h * ($width/$w));
+        }
+
         if (is_null($width) && is_null($height)) {
             return $this->app->pathToUrl($path);
         }
 
-        if (!in_array($mode, ['thumbnail', 'best_fit', 'resize','fit_to_width'])) {
+        if (!in_array($mode, ['thumbnail', 'bestFit', 'resize','fitToWidth','fitToHeight'])) {
             $mode = 'thumbnail';
         }
 

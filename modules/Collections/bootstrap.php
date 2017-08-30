@@ -172,6 +172,10 @@ $this->module("collections")->extend([
 
         $fieldsFilter = [];
 
+        if (isset($options['fieldsFilter']) && is_array($options['fieldsFilter'])) {
+            $fieldsFilter = $options['fieldsFilter'];
+        }
+
         if (isset($options['user']) && $options['user']) {
             $fieldsFilter['user'] = $options['user'];
         }
@@ -209,7 +213,7 @@ $this->module("collections")->extend([
         $entry = $this->app->storage->findOne("collections/{$collection}", $criteria, $projection);
 
         if (count($fieldsFilter)) {
-           $entries = $this->_filterFields($entries, $_collection, $fieldsFilter);
+           $entry = $this->_filterFields($entry, $_collection, $fieldsFilter);
         }
 
         if ($entry && $populate) {
@@ -393,13 +397,25 @@ $this->module("collections")->extend([
         static $cache;
         static $languages;
 
+        if (null === $items) {
+            return $items;
+        }
+
+        $single = false;
+
+        if (!isset($items[0]) && count($items)) {
+            $items = [$items];
+            $single = true;
+        }
+
         $filter = array_merge([
             'user' => false,
-            'lang' => false
+            'lang' => false,
+            'ignoreDefaultFallback' => false
         ], $filter);
 
         extract($filter);
-
+        
         if (null === $cache) {
             $cache = [];
         }
@@ -468,9 +484,9 @@ $this->module("collections")->extend([
         }
 
         if ($lang && count($languages) && count($cache[$collection['name']]['localize'])) {
-            
+
             $localfields = $cache[$collection['name']]['localize'];
-            $items = array_map(function($entry) use($localfields, $lang, $languages) {
+            $items = array_map(function($entry) use($localfields, $lang, $languages, $ignoreDefaultFallback) {
                 
                 foreach ($localfields as $name => $local) {
 
@@ -489,6 +505,12 @@ $this->module("collections")->extend([
 
                             unset($entry["{$name}_{$l}"]);
                             unset($entry["{$name}_{$l}_slug"]);
+
+                        } elseif ($l == $lang && $ignoreDefaultFallback) {
+
+                            if ($ignoreDefaultFallback === true || (is_array($ignoreDefaultFallback) && in_array($name, $ignoreDefaultFallback))) {
+                                $entry[$name] = null;
+                            }
                         }
                     }
                 }
@@ -498,7 +520,7 @@ $this->module("collections")->extend([
             }, $items);
         }
 
-        return $items;
+        return $single ? $items[0] : $items;
     }
 ]);
 

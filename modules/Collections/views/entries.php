@@ -60,8 +60,10 @@
 
         <div class="uk-width-medium-1-3 uk-viewport-height-1-2 uk-container-center uk-text-center uk-flex uk-flex-center uk-flex-middle" if="{ !loading && !entries.length && !filter }">
 
-            <div class="uk-animation-fade">
-
+            <div class="uk-animation-scale">
+                
+                <div class="uk-margin"><img src="@base('assets:app/media/icons/items.svg')" width="80" data-uk-svg></div>
+                <hr>
                 <span class="uk-text-large uk-text-muted">@lang('No entries'). <a href="@route('/collections/entry/'.$collection['name'])">@lang('Create an entry').</a></span>
 
             </div>
@@ -110,10 +112,11 @@
         App.Utils.renderer.collectionlink = function(v) {
 
             if (Array.isArray(v)) {
+
                 var vals = [];
 
                 v.forEach(function(val) {
-                    vals.push(val.display ? val.display: App.Utils.renderer.default(val));
+                    vals.push(val && val.display ? val.display: App.Utils.renderer.default(val));
                 });
 
                 if (vals.length > 1) {
@@ -123,7 +126,7 @@
                 return vals[0];
             }
 
-            return v.display ? v.display: App.Utils.renderer.default(v);
+            return v && v.display ? v.display : App.Utils.renderer.default(v);
         };
 
         var $this = this, $root = App.$(this.root), limit = 20;
@@ -142,7 +145,11 @@
             return field.lst;
         });
 
-        this.fields.push({name:'_modified', 'label':'@lang('Modified')'});
+        this.fieldsidx['_created'] = {name:'_created', 'label':'@lang('Created')', type: 'text'};
+        this.fieldsidx['_modified'] = {name:'_modified', 'label':'@lang('Modified')', type: 'text'};
+
+        this.fields.push(this.fieldsidx['_created']);
+        this.fields.push(this.fieldsidx['_modified']);
 
         this.sort     = {'_created': -1};
         this.selected = [];
@@ -328,10 +335,10 @@
             }
 
             if (!this.sort[col]) {
-                this.sort        = {};
+                this.sort      = {};
                 this.sort[col] = 1;
             } else {
-                this.sort[col] = this.sort[col] == 1 ? -1:1;
+                this.sort[col] = this.sort[col] == 1 ? -1 : 1;
             }
 
             this.sortedBy = field;
@@ -356,7 +363,7 @@
                 });
             }
 
-            $root.find('[data-check="all"]').prop('checked', checkboxes.length === selected.length);
+            $root.find('[data-check="all"]').prop('checked', checkboxes.length && checkboxes.length === selected.length);
 
             if (update) {
                 this.update();

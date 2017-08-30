@@ -34,9 +34,21 @@ class RestApi extends \LimeExtra\Controller {
         if ($sort     = $this->param('sort', null))     $options['sort'] = $sort;
         if ($skip     = $this->param('skip', null))     $options['skip'] = intval($skip);
         if ($populate = $this->param('populate', null)) $options['populate'] = $populate;
-        if ($lang = $this->param('lang', null)) $options['lang'] = $lang;
-        if ($user) $options["user"] = $user;
 
+        // fields filter
+        $fieldsFilter = [];
+
+        if ($fieldsFilter = $this->param('fieldsFilter', null)) $options['fieldsFilter'] = $fieldsFilter;
+        if ($lang = $this->param('lang', false)) $fieldsFilter['lang'] = $lang;
+        if ($ignoreDefaultFallback = $this->param('ignoreDefaultFallback', false)) $fieldsFilter['ignoreDefaultFallback'] = $ignoreDefaultFallback;
+        if ($user) $fieldsFilter["user"] = $user;
+
+        $fieldsFilter['ignoreDefaultFallback'] = ['date'];
+
+        if (count($fieldsFilter)) {
+            $options['fieldsFilter'] = $fieldsFilter;
+        }
+        
         if (isset($options["sort"])) {
             
             foreach ($sort as $key => &$value) {
@@ -85,9 +97,11 @@ class RestApi extends \LimeExtra\Controller {
             return $this->stop('{"error": "Collection not found"}', 412);
         }
 
-        if (!$this->module('collections')->hasaccess($collection, isset($data['_id']) ? 'entries_create':'entries_edit')) {
+        if (!$this->module('collections')->hasaccess($collection, isset($data['_id']) ? 'entries_edit':'entries_create')) {
             return $this->stop('{"error": "Unauthorized"}', 401);
         }
+
+        $data['_by'] = $this->module('cockpit')->getUser('_id');
 
         $data = $this->module('collections')->save($collection, $data);
 
@@ -138,8 +152,8 @@ class RestApi extends \LimeExtra\Controller {
 
         $user = $this->module('cockpit')->getUser();
 
-        if (!$name || !$user) {
-            return $user ? $this->stop('{"error": "Unauthorized"}', 401) : false;
+        if (!$user) {
+            return $this->stop('{"error": "Unauthorized"}', 401);
         }
 
         $collections = $this->module("collections")->getCollectionsInGroup($user['group'], true);
